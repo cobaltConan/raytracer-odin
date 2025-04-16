@@ -13,17 +13,25 @@ traceRay :: proc(origin: ^vec3, direction: ^vec3, t_min: f64, t_max: f64, ctx: ^
     closest_sphere: util.Sphere
     closest_sphere_bool := false
     t1, t2: f64
-    for &sphere in ctx.spheres {
-        t1, t2 = intersectRaySphere(origin, direction, &sphere)
-        if t1 > t_min && t1 < t_max && t1 < closest_t {
-            closest_t = t1
-            closest_sphere = sphere
-            closest_sphere_bool = true
-        }        
-        if t2 > t_min && t1 < t_max && t2 < closest_t {
-            closest_t = t2
-            closest_sphere = sphere
-            closest_sphere_bool = true
+    for &primitive in ctx.primitives {
+        switch prim_type in primitive { 
+        case util.Sphere: {
+            sphere := prim_type
+            t1, t2 = intersectRaySphere(origin, direction, &sphere)
+            if t1 > t_min && t1 < t_max && t1 < closest_t {
+                closest_t = t1
+                closest_sphere = sphere
+                closest_sphere_bool = true
+            }        
+            if t2 > t_min && t1 < t_max && t2 < closest_t {
+                closest_t = t2
+                closest_sphere = sphere
+                closest_sphere_bool = true
+            }
+            }
+        case util.Triangle: {
+
+        }
         }
     }
     if !closest_sphere_bool {
@@ -73,10 +81,14 @@ main :: proc() {
         colour = {0, 255 ,0}
     }
 
+    primitive1: util.Primitive = sphere1
+    primitive2: util.Primitive = sphere2
+    primitive3: util.Primitive = sphere3
+
     resize(&frameBuffer, width * height)
-    spheres: [dynamic]util.Sphere
-    append(&spheres, sphere1, sphere2, sphere3)
-    ctx: util.Ctx = {width, height, spheres}
+    primitives: [dynamic]util.Primitive
+    append(&primitives, primitive1, primitive2, primitive3)
+    ctx: util.Ctx = {width, height, primitives}
 
     origin: vec3 = {0,0,0}
     direction: vec3

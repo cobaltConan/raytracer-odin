@@ -12,12 +12,23 @@ Sphere :: struct {
     colour: vec3,
 }
 
+Triangle :: struct {
+    v0: vec3,
+    v1: vec3,
+    v2: vec3,
+    colour: vec3,
+}
+
+Primitive :: union {
+    Triangle,
+    Sphere,
+}
+
 Ctx :: struct {
     width: int,
     height: int,
-    spheres: [dynamic]Sphere,
+    primitives: [dynamic]Primitive,
 };
-
 
 write_PPM :: proc(framebuffer: ^[dynamic]vec3, ctx: ^Ctx) {
     bytes: [dynamic]u8
