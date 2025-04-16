@@ -6,9 +6,16 @@ import "core:os"
 
 vec3 :: la.Vector3f64
 
+Sphere :: struct {
+    radius: f64,
+    centre: vec3,
+    colour: vec3,
+}
+
 Ctx :: struct {
     width: int,
     height: int,
+    spheres: [dynamic]Sphere,
 };
 
 
@@ -24,7 +31,8 @@ write_PPM :: proc(framebuffer: ^[dynamic]vec3, ctx: ^Ctx) {
 
     for i in 0..< ctx.height * ctx.width {
         for j in 0..< 3 {
-            append_elem_string(&bytes, fmt.aprint(byte(255 * max(0, min(1, framebuffer[i][j])))))
+            // append_elem_string(&bytes, fmt.aprint(byte(255 * max(0, min(1, framebuffer[i][j])))))
+            append_elem_string(&bytes, fmt.aprint(byte(framebuffer[i][j])))
             if (j != 3) {
                 append_elem_string(&bytes, " ")
             }
