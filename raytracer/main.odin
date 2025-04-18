@@ -103,7 +103,7 @@ main :: proc() {
     frameBuffer := [dynamic]vec3 {}
 
     sphere1 := util.Sphere {
-        centre = {-3, -3, 10},
+        centre = {-3, 0, 10},
         radius = 1,
         colour = {255, 0 ,0}
     }
@@ -127,10 +127,16 @@ main :: proc() {
     direction: vec3
     colour: vec3
 
+    fov: f64 = 51.52
+    scale: f64 = math.tan(math.to_radians(fov * 0.5))
+    imageAspectRatio: f64 = f64(width) / f64(height)
+
     for y in 0..< height {
         for x in 0..< width {
-            direction.x = -0.5 + (f64(x) + f64(0.5)) / f64(width)
-            direction.y = -0.5 + (f64(y) + f64(0.5)) / f64(width)
+            // direction.x = -0.5 + (f64(x) + f64(0.5)) / f64(width)
+            // direction.y = -0.5 + (f64(y) + f64(0.5)) / f64(width)
+            direction.x = (2 * (f64(x) + 0.5) / width - 1) * imageAspectRatio * scale
+            direction.y = (1 - 2 * (f64(y) + 0.5) / height) * scale
             direction.z = 1
             colour = traceRay(&origin, &direction, 1, 1e10, &ctx)
             frameBuffer[width*y + x] = colour
