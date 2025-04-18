@@ -10,9 +10,10 @@ vec3 :: la.Vector3f64
 
 traceRay :: proc(origin: ^vec3, direction: ^vec3, t_min: f64, t_max: f64, ctx: ^util.Ctx) -> (colour: vec3) {
     closest_t: f64 = 1e10
-    closest_sphere: util.Sphere
+    closest_prim: util.Primitive
     closest_sphere_bool := false
-    t1, t2: f64
+    t1, t2, t, u, v: f64
+    hit: bool
     for &primitive in ctx.primitives {
         switch prim_type in primitive { 
         case util.Sphere: {
@@ -20,24 +21,40 @@ traceRay :: proc(origin: ^vec3, direction: ^vec3, t_min: f64, t_max: f64, ctx: ^
             t1, t2 = intersectRaySphere(origin, direction, &sphere)
             if t1 > t_min && t1 < t_max && t1 < closest_t {
                 closest_t = t1
-                closest_sphere = sphere
+                closest_prim = sphere
                 closest_sphere_bool = true
             }        
             if t2 > t_min && t1 < t_max && t2 < closest_t {
                 closest_t = t2
-                closest_sphere = sphere
+                closest_prim = sphere
                 closest_sphere_bool = true
             }
             }
         case util.Triangle: {
-
+             triangle := prim_type
+             t, u, v, hit = intersectRayTri(origin, direction, &triangle)
+             if hit && t < closest_t && t > t_min{
+                u *= 255
+                v *= 255
+                closest_sphere_bool = true
+                closest_t = t
+                triangle.colour = vec3{u,v,1-u-v}
+                closest_prim = triangle
+             }
         }
         }
     }
     if !closest_sphere_bool {
         return BACKGROUND_COLOUR
     }
-    return closest_sphere.colour
+
+    switch prim_type in closest_prim {
+        case util.Sphere:
+            return closest_prim.(util.Sphere).colour
+        case util.Triangle:
+            return closest_prim.(util.Triangle).colour
+    }
+    return // shouldn't reach this code
 }
 
 intersectRaySphere :: proc(origin: ^vec3, direction: ^vec3, sphere: ^util.Sphere) -> (f64, f64) {
@@ -58,36 +75,52 @@ intersectRaySphere :: proc(origin: ^vec3, direction: ^vec3, sphere: ^util.Sphere
     return t1, t2
 }
 
+intersectRayTri :: proc(origin: ^vec3, direction: ^vec3, tri: ^util.Triangle) -> (t: f64, u:f64, v: f64, hit: bool) {
+    e0: vec3 = tri.v0 - tri.v2
+    e1: vec3 = tri.v1 - tri.v2
+    pvec: vec3 = la.cross(direction^, e1)
+    det: f64 = la.dot(e0, pvec)
+    if (det < 0.001) {hit = false; return}
+    invDet: f64 = 1 / det
+
+    tvec: vec3 = origin^ - tri.v2
+    u = la.dot(tvec, pvec) * invDet
+    if u < 0 || u > 1 {hit = false; return}
+
+    qvec: vec3 = la.cross(tvec, e0)
+    v = la.dot(direction^, qvec) * invDet
+    if v < 0 || u + v > 1 {hit = false; return}
+
+    t = la.dot(e1, qvec) * invDet
+
+    hit = true
+    return
+}
+
 main :: proc() {
     width :: 1920
     height :: 1080
     frameBuffer := [dynamic]vec3 {}
 
-    sphere1 := util.Sphere{
-        centre = {0, -1, 3},
+    sphere1 := util.Sphere {
+        centre = {-3, -3, 10},
         radius = 1,
         colour = {255, 0 ,0}
     }
 
-    sphere2 := util.Sphere{
-        centre = {0, 1, 3},
-        radius = 1,
-        colour = {0, 0, 255}
-    }
-
-    sphere3 := util.Sphere{
-        centre = {-2, 0, 4},
-        radius = 1,
-        colour = {0, 255 ,0}
+    tri1 := util.Triangle {
+        v0 = {-3, -3, 10},
+        v1 = {-1, -1, 10},
+        v2 = {3, -3, 10},
+        colour = {255, 0, 0}
     }
 
     primitive1: util.Primitive = sphere1
-    primitive2: util.Primitive = sphere2
-    primitive3: util.Primitive = sphere3
+    primitive2: util.Primitive = tri1
 
     resize(&frameBuffer, width * height)
     primitives: [dynamic]util.Primitive
-    append(&primitives, primitive1, primitive2, primitive3)
+    append(&primitives, primitive1, primitive2)
     ctx: util.Ctx = {width, height, primitives}
 
     origin: vec3 = {0,0,0}
