@@ -4,8 +4,10 @@ import fmt "core:fmt"
 import util "util"
 import la "core:math/linalg"
 import "core:math"
+import "parser"
+import "core:os"
 
-BACKGROUND_COLOUR :: vec3{0,0,50}
+BACKGROUND_COLOUR :: vec3{0,0,0}
 vec3 :: la.Vector3f64
 
 traceRay :: proc(origin: ^vec3, direction: ^vec3, t_min: f64, t_max: f64, ctx: ^util.Ctx) -> (colour: vec3) {
@@ -38,7 +40,8 @@ traceRay :: proc(origin: ^vec3, direction: ^vec3, t_min: f64, t_max: f64, ctx: ^
                 v *= 255
                 closest_sphere_bool = true
                 closest_t = t
-                triangle.colour = vec3{u,v,1-u-v}
+                triangle.colour = vec3{255,0,0}
+                // triangle.colour = vec3{u,v,1-u-v}
                 closest_prim = triangle
              }
         }
@@ -121,7 +124,6 @@ main :: proc() {
     resize(&frameBuffer, width * height)
     primitives: [dynamic]util.Primitive
     append(&primitives, primitive1, primitive2)
-    ctx: util.Ctx = {width, height, primitives}
 
     origin: vec3 = {0,0,0}
     direction: vec3
@@ -130,6 +132,33 @@ main :: proc() {
     fov: f64 = 51.52
     scale: f64 = math.tan(math.to_radians(fov * 0.5))
     imageAspectRatio: f64 = f64(width) / f64(height)
+
+    vertBuf: [dynamic]vec3
+    faceBuf: [dynamic][3]int
+    parser.parseObjFile("assets/teapot.obj", &vertBuf, &faceBuf)
+
+    fmt.println(len(vertBuf))
+    fmt.println(len(faceBuf))
+
+    tempTri: util.Triangle
+    tempTri.colour = vec3{255,255,0}
+    tempPrim: util.Primitive
+    for face in faceBuf {
+        tempTri.v0 = vertBuf[face[0]] 
+        tempTri.v1 = vertBuf[face[1]] 
+        tempTri.v2 = vertBuf[face[2]] 
+        tempTri.v0.z += 10
+        tempTri.v1.z += 10
+        tempTri.v2.z += 10
+        tempPrim = tempTri
+        append(&primitives, tempPrim)
+    }    
+
+    ctx: util.Ctx = {width, height, primitives}
+    
+    totalPixel: f64 = height * width
+    currPixel: int
+    percentDone: f64
 
     for y in 0..< height {
         for x in 0..< width {
@@ -140,6 +169,11 @@ main :: proc() {
             direction.z = 1
             colour = traceRay(&origin, &direction, 1, 1e10, &ctx)
             frameBuffer[width*y + x] = colour
+
+            percentDone = 100 * f64(currPixel) / totalPixel
+            fmt.printf("\rPercent done: %.2f%%", percentDone)
+            os.flush(os.stdout)
+            currPixel += 1
         }
     }
 

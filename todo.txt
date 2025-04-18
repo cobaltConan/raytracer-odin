@@ -1,0 +1,13 @@
+TODO:
+ - loading progress bar
+ - multithread code
+ - bvh trees
+ - basic phong shading code + lights
+ - obj file parser
+    -> load verticies into buffer
+    -> load faces into buffer
+ - skybox
+ - simd
+
+ - global illumination (monte carlo)
+ - metropolis hasting light transport
