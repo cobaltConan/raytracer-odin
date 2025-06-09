@@ -126,8 +126,10 @@ main :: proc() {
 
     // loading obj file
     vertBuf: [dynamic]vec3
+    vertNBuf: [dynamic]vec3
     faceBuf: [dynamic][3]int
-    parser.parseObjFile("assets/teapot.obj", &vertBuf, &faceBuf)
+    // parser.parseObjFile("assets/teapot.obj", &vertBuf, &vertNBuf, &faceBuf)
+    parser.parseObjFile("assets/suzTest.obj", &vertBuf, &vertNBuf, &faceBuf)
     tempTri: util.Triangle
     tempTri.colour = vec3{255,255,0}
     tempPrim: util.Primitive
